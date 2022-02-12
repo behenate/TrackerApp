@@ -29,6 +29,8 @@ public class VideoDisplay extends Pane {
         this.videoHeight = videoHeight;
         this.setPrefWidth(videoWidth);
         this.setPrefHeight(videoHeight);
+        videoView.setFitWidth(videoWidth);
+        videoView.setFitHeight(videoHeight);
         this.getChildren().add(videoView);
     }
 

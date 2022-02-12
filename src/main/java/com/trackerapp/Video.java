@@ -39,10 +39,11 @@ public class Video {
         this(videoPath);
         this.videoWidth = videoWidth;
         this.videoHeight = videoHeight;
+
+        this.frameReader = new VideoFrameReader(videoPath, imagesDir);
         this.videoDisplay = new VideoDisplay(frameReader, videoWidth, videoHeight);
-
-
-
+        frameReader.readFrame(0);
+        videoDisplay.displayCurrentFrame();
     }
 
     //  Constructor which uses default width and height
@@ -56,7 +57,7 @@ public class Video {
         imagesDirPath = "src/main/resources/" + videoFilename + "/";
 //        Create directory for images, if directory already exists, the application assumes that the file has already been converted and will ask if it should convert again
         imagesDir = new File(imagesDirPath);
-        this.frameReader = new VideoFrameReader(videoPath, imagesDir);
+
     }
 
 //    Constructors for webcam use

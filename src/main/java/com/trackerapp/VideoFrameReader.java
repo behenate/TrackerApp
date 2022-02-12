@@ -20,6 +20,7 @@ public class VideoFrameReader {
     private Image frameImage = null;
     private int videoLength;
 
+//    Default width and height for conversion
     private double videoWidth;
     private double videoHeight;
 
@@ -53,11 +54,11 @@ public class VideoFrameReader {
         this.videoHeight = this.videoCapture.get(Videoio.CAP_PROP_FRAME_HEIGHT);
     }
 
-//    Loads frame with the provided number
     public void readFrame(int frameNum){
-        if (frameNum > videoLength){
-            return;
-        }
+        readFrame(frameNum, videoSize);
+    }
+//    Loads frame with the provided number
+    public void readFrame(int frameNum, Size size){
         String frameFilepath = imagesDir.getPath() + "/" + frameNum;
 //        Load image from images if exists, kinda ugly but no point in writing a function for it
         if (new File(frameFilepath +".jpg").exists()){
@@ -71,17 +72,16 @@ public class VideoFrameReader {
             }
             Mat newMat = new Mat();
             videoCapture.read(newMat);
-            if (newMat.empty()){
-                return;
-            }
+
             frameMat = newMat;
         }
 //        Resize the frame to desired size
-        if (!frameMat.size().equals(videoSize)){
-            Imgproc.resize(frameMat, frameMat, videoSize);
+        if (!frameMat.size().equals(size) && !frameMatEmpty()){
+            Imgproc.resize(frameMat, frameMat, size);
         }
-
-        frameImage = Utils.matToImg(".bmp", frameMat);
+//        Convert to javafx image format
+        if (!frameMatEmpty())
+            frameImage = Utils.matToImg(".bmp", frameMat);
         currentFrameNum = frameNum;
     }
 

@@ -17,7 +17,7 @@ public class MainViewGui extends AnchorPane {
     private final App appInstance;
     //        Create and position video viwe
     Video video = new Video("/home/wojciech/IdeaProjects/TrackerApp/src/main/resources/videos/dino.mp4",
-            windowWidth*0.16*4, windowWidth*0.09*4);
+            windowWidth*0.6f, windowWidth*0.6f*0.5625f);
 //    Video video = new Video(320, 24-)
     Popup conversionPopup;
     public MainViewGui(App appInstance){
