@@ -26,6 +26,8 @@ public class VideoFrameReader {
 
     private Size videoSize;
 
+    private Thread readThread;
+
 //    Constructor with provided resizing
     public VideoFrameReader(String videoFilepath, File imagesDir, double videoWidth, double videoHeight){
         this(videoFilepath, imagesDir);
@@ -46,8 +48,10 @@ public class VideoFrameReader {
     }
 //    For webcam
     public VideoFrameReader(){
+
         this.videoCapture = new VideoCapture(0);
         this.videoLength = Integer.MAX_VALUE;
+//        Just set some random video path, since it has to be not null and won't be used
         videoFilepath = "/knjjbgfcvhfvbnmkugfvbnjgfvb";
         imagesDir = new File(videoFilepath);
         this.videoWidth = (int) this.videoCapture.get(Videoio.CAP_PROP_FRAME_WIDTH);
@@ -59,30 +63,36 @@ public class VideoFrameReader {
     }
 //    Loads frame with the provided number
     public void readFrame(int frameNum, Size size){
-        String frameFilepath = imagesDir.getPath() + "/" + frameNum;
+        readThread = new Thread(() -> {
+            String frameFilepath = imagesDir.getPath() + "/" + frameNum;
 //        Load image from images if exists, kinda ugly but no point in writing a function for it
-        if (new File(frameFilepath +".jpg").exists()){
-            frameMat = Imgcodecs.imread(frameFilepath+".jpg");
-        }else if (new File(frameFilepath +".png").exists()){
-            frameMat = Imgcodecs.imread(frameFilepath+".png");
-        }else{
-//            Use set only if the app tries to read frame different than the current one, since set on frame number is slow.
-            if (frameNum != (int) videoCapture.get(Videoio.CAP_PROP_POS_FRAMES)+1){
-                videoCapture.set(1, frameNum-1);
-            }
-            Mat newMat = new Mat();
-            videoCapture.read(newMat);
+            if (new File(frameFilepath + ".jpg").exists()) {
+                frameMat = Imgcodecs.imread(frameFilepath + ".jpg");
+            } else if (new File(frameFilepath + ".bmp").exists()) {
+                frameMat = Imgcodecs.imread(frameFilepath + ".bmp");
 
-            frameMat = newMat;
-        }
+            } else {
+//            Use set only if the app tries to read frame different than the next one, since set on frame number is slow.
+                if (frameNum != (int) videoCapture.get(Videoio.CAP_PROP_POS_FRAMES) + 1) {
+                    videoCapture.set(1, frameNum - 1);
+                }
+                Mat newMat = new Mat();
+                videoCapture.read(newMat);
+
+                frameMat = newMat;
+            }
+
 //        Resize the frame to desired size
-        if (!frameMat.size().equals(size) && !frameMatEmpty()){
-            Imgproc.resize(frameMat, frameMat, size);
-        }
+            if (!frameMat.size().equals(size) && !frameMatEmpty()) {
+                Imgproc.resize(frameMat, frameMat, size);
+            }
 //        Convert to javafx image format
-        if (!frameMatEmpty())
-            frameImage = Utils.matToImg(".bmp", frameMat);
-        currentFrameNum = frameNum;
+
+            if (!frameMatEmpty())
+                frameImage = Utils.matToImg(".bmp", frameMat);
+            currentFrameNum = frameNum;
+        });
+        readThread.start();
     }
 
     public Image getFrameImage(){
@@ -116,4 +126,7 @@ public class VideoFrameReader {
         return videoLength;
     }
 
+    public Thread getReadThread() {
+        return readThread;
+    }
 }

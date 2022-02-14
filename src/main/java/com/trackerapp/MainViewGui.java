@@ -1,6 +1,5 @@
 package com.trackerapp;
 
-import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.*;
@@ -28,8 +27,8 @@ public class MainViewGui extends AnchorPane {
         this.getChildren().add(video.getDisplay());
 
 //        Create and positon Slider
-        Slider slider = new Slider();
-        slider.setPrefWidth(3000);
+        FrameSlider slider = new FrameSlider(video);
+        slider.setPrefWidth(App.width-App.width/5);
         AnchorPane.setBottomAnchor(slider, windowHeight/20);
         this.getChildren().add(slider);
 

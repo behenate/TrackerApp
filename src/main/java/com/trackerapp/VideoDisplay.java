@@ -1,32 +1,21 @@
 package com.trackerapp;
 
 import javafx.application.Platform;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.Pane;
-import org.opencv.core.Mat;
-import org.opencv.videoio.VideoCapture;
-import org.opencv.videoio.Videoio;
-
-import static com.trackerapp.Utils.matToImg;
 
 
 public class VideoDisplay extends Pane {
 
-    private VideoFrameReader frameReader;
+    private final VideoFrameReader frameReader;
 
-    private ImageView videoView = new ImageView();
+    private final ImageView videoView = new ImageView();
     private Thread playThread;
 
-//    Set default video width and height
-    private double videoWidth=1280;
-    private double videoHeight=720;
-
-//    Constructor which uses custom width and height
+    //    Constructor which uses custom width and height
     public VideoDisplay(VideoFrameReader frameReader, double videoWidth, double videoHeight){
         this(frameReader);
-        this.videoWidth = videoWidth;
-        this.videoHeight = videoHeight;
+        //    Set default video width and height
         this.setPrefWidth(videoWidth);
         this.setPrefHeight(videoHeight);
         videoView.setFitWidth(videoWidth);

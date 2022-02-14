@@ -1,15 +1,15 @@
 package com.trackerapp;
 
+import javafx.event.Event;
 import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
+
 import javafx.scene.image.ImageView;
 import org.opencv.core.Mat;
 import org.opencv.core.Size;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
-import org.opencv.videoio.VideoCapture;
-import org.opencv.videoio.Videoio;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,18 +17,13 @@ import java.util.Optional;
 import org.apache.commons.io.FileUtils;
 
 
-public class Video {
-    private String videoPath;
+public class Video implements SliderControllable {
     private String videoFilename;
 
     private String imagesDirPath;
     private File imagesDir;
 
-    private ImageView videoView = new ImageView();
-
-    //    Set default video width and height
-    private double videoWidth=1280;
-    private double videoHeight=720;
+    private final ImageView videoView = new ImageView();
 
     private VideoDisplay videoDisplay;
 
@@ -37,8 +32,7 @@ public class Video {
     //    Constructor which uses custom width and height
     public Video(String videoPath, double videoWidth, double videoHeight){
         this(videoPath);
-        this.videoWidth = videoWidth;
-        this.videoHeight = videoHeight;
+        //    Set default video width and height
 
         this.frameReader = new VideoFrameReader(videoPath, imagesDir);
         this.videoDisplay = new VideoDisplay(frameReader, videoWidth, videoHeight);
@@ -48,9 +42,8 @@ public class Video {
 
     //  Constructor which uses default width and height
     public Video(String path){
-        videoPath = path;
         //         Find name of the provided video file
-        String[] filenameSplit = videoPath.split("/");
+        String[] filenameSplit = path.split("/");
         videoFilename = filenameSplit[filenameSplit.length-1];
 
 //          Generate path for the images
@@ -88,6 +81,11 @@ public class Video {
         Thread conversionThread = new Thread(() -> {
             int frameNum = 0;
             frameReader.readFrame(frameNum);
+            try {
+                frameReader.getReadThread().join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
             while (!frameReader.frameMatEmpty()) {
                 videoDisplay.displayCurrentFrame();
                 Mat resized = new Mat();
@@ -95,6 +93,13 @@ public class Video {
                 Imgproc.resize(frameReader.getFrameMat(), resized, sz);
                 Imgcodecs.imwrite(imagesDirPath + frameNum + extension, resized);
                 frameNum++;
+
+//                Wait for the frameReader to finish reading the frame
+                try {
+                    frameReader.getReadThread().join();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
                 frameReader.readFrame(frameNum);
             }
         });
@@ -116,5 +121,13 @@ public class Video {
 
     public Node getDisplay(){
         return videoDisplay;
+    }
+
+    @Override
+    public void onSliderUpdate(Number oldValue, Number newValue) {
+        frameReader.readFrame(
+                (int) (frameReader.getVideoLength() * (newValue.doubleValue()/100f))
+        );
+        videoDisplay.displayCurrentFrame();
     }
 }
