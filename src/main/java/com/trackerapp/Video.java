@@ -29,29 +29,32 @@ public class Video implements SliderControllable {
 
     private VideoFrameReader frameReader;
 
-    //    Constructor which uses custom width and height
-    public Video(String videoPath, double videoWidth, double videoHeight){
-        this(videoPath);
-        //    Set default video width and height
-
-        this.frameReader = new VideoFrameReader(videoPath, imagesDir);
-        this.videoDisplay = new VideoDisplay(frameReader, videoWidth, videoHeight);
-        frameReader.readFrame(0);
-        videoDisplay.displayCurrentFrame();
-    }
-
     //  Constructor which uses default width and height
-    public Video(String path){
+    public Video(String videoPath){
         //         Find name of the provided video file
-        String[] filenameSplit = path.split("/");
+        String[] filenameSplit = videoPath.split("/");
         videoFilename = filenameSplit[filenameSplit.length-1];
 
 //          Generate path for the images
         imagesDirPath = "src/main/resources/" + videoFilename + "/";
 //        Create directory for images, if directory already exists, the application assumes that the file has already been converted and will ask if it should convert again
         imagesDir = new File(imagesDirPath);
-
+        this.frameReader = new VideoFrameReader(videoPath, imagesDir);
+        this.videoDisplay = new VideoDisplay(frameReader);
+        frameReader.readFrame(0);
+        videoDisplay.displayCurrentFrame();
     }
+
+
+    //    Constructor which uses custom width and height
+    public Video(String videoPath, double videoWidth, double videoHeight) {
+        this(videoPath);
+        //    Set default video width and height
+        this.videoDisplay = new VideoDisplay(frameReader, videoWidth, videoHeight);
+        videoDisplay.displayCurrentFrame();
+    }
+
+
 
 //    Constructors for webcam use
     public Video(){
@@ -80,12 +83,9 @@ public class Video implements SliderControllable {
 
         Thread conversionThread = new Thread(() -> {
             int frameNum = 0;
+
             frameReader.readFrame(frameNum);
-            try {
-                frameReader.getReadThread().join();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+
             while (!frameReader.frameMatEmpty()) {
                 videoDisplay.displayCurrentFrame();
                 Mat resized = new Mat();
@@ -93,14 +93,8 @@ public class Video implements SliderControllable {
                 Imgproc.resize(frameReader.getFrameMat(), resized, sz);
                 Imgcodecs.imwrite(imagesDirPath + frameNum + extension, resized);
                 frameNum++;
-
-//                Wait for the frameReader to finish reading the frame
-                try {
-                    frameReader.getReadThread().join();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
                 frameReader.readFrame(frameNum);
+                //                Wait for the frameReader to finish reading the frame
             }
         });
         conversionThread.start();
@@ -125,9 +119,14 @@ public class Video implements SliderControllable {
 
     @Override
     public void onSliderUpdate(Number oldValue, Number newValue) {
-        frameReader.readFrame(
-                (int) (frameReader.getVideoLength() * (newValue.doubleValue()/100f))
-        );
-        videoDisplay.displayCurrentFrame();
+        new Thread(()->{
+            long start = System.currentTimeMillis();
+            frameReader.readFrame(
+                    (int) (frameReader.getVideoLength() * (newValue.doubleValue()/100f))
+            );
+            videoDisplay.displayCurrentFrame();
+            System.out.println(System.currentTimeMillis()-start);
+        }).start();
+
     }
 }

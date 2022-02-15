@@ -63,7 +63,6 @@ public class VideoFrameReader {
     }
 //    Loads frame with the provided number
     public void readFrame(int frameNum, Size size){
-        readThread = new Thread(() -> {
             String frameFilepath = imagesDir.getPath() + "/" + frameNum;
 //        Load image from images if exists, kinda ugly but no point in writing a function for it
             if (new File(frameFilepath + ".jpg").exists()) {
@@ -82,17 +81,19 @@ public class VideoFrameReader {
                 frameMat = newMat;
             }
 
-//        Resize the frame to desired size
-            if (!frameMat.size().equals(size) && !frameMatEmpty()) {
-                Imgproc.resize(frameMat, frameMat, size);
-            }
-//        Convert to javafx image format
 
+//            TODO: Resize with multithreading causes crashes for unknown reason, its not very important so ignoring for now
+//        Resize the frame to desired size
+//            if (!frameMat.size().equals(size) && !frameMatEmpty() && frameMat.total() != 0) {
+//                System.out.println("RESIZE");
+//                Imgproc.resize(frameMat, frameMat, size);
+//            }
+//        Convert to javafx image format
             if (!frameMatEmpty())
                 frameImage = Utils.matToImg(".bmp", frameMat);
             currentFrameNum = frameNum;
-        });
-        readThread.start();
+
+
     }
 
     public Image getFrameImage(){
