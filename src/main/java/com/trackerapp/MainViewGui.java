@@ -14,26 +14,26 @@ public class MainViewGui extends AnchorPane {
     private double windowWidth = App.width;
     private double windowHeight = App.height;
     private final App appInstance;
-    //        Create and position video viwe
-    Video video = new Video("/home/wojciech/IdeaProjects/TrackerApp/src/main/resources/videos/dino.mp4",
-            windowWidth*0.6f, windowWidth*0.6f*0.5625f);
-//    Video video = new Video(320, 24-)
+    //        Create and position video
+    private Video video = new Video("/home/wojciech/IdeaProjects/TrackerApp/src/main/resources/videos/dino.mp4",
+            1280, 720);
+    private TrackingWindow trackingWindow = new TrackingWindow(video);
+
     Popup conversionPopup;
     public MainViewGui(App appInstance){
         this.appInstance = appInstance;
 
         AnchorPane.setTopAnchor(video.getDisplay(), windowHeight/20);
         AnchorPane.setLeftAnchor(video.getDisplay(), windowWidth/20);
-        this.getChildren().add(video.getDisplay());
+        this.getChildren().add(trackingWindow);
 
-//        Create and positon Slider
-        FrameSlider slider = new FrameSlider(video);
+//        Create and position Slider
+        FrameSlider slider = new FrameSlider(trackingWindow);
         slider.setPrefWidth(App.width-App.width/5);
         AnchorPane.setBottomAnchor(slider, windowHeight/20);
         this.getChildren().add(slider);
 
-
-        //        Container for conversion buttons
+//        Container for conversion buttons
         HBox conversionBox = new HBox();
 
 //        Button for conversion
@@ -67,6 +67,7 @@ public class MainViewGui extends AnchorPane {
             conversionPopup.show(appInstance.getStage());
         });
     }
+
 
     private Popup createConversionPopup(Runnable onStart){
         Popup conversionPopup = new Popup();

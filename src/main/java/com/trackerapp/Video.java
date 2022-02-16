@@ -14,6 +14,8 @@ import org.opencv.imgproc.Imgproc;
 import java.io.File;
 import java.io.IOException;
 import java.util.Optional;
+import java.util.concurrent.ThreadFactory;
+
 import org.apache.commons.io.FileUtils;
 
 
@@ -28,7 +30,6 @@ public class Video implements SliderControllable {
     private VideoDisplay videoDisplay;
 
     private VideoFrameReader frameReader;
-
     //  Constructor which uses default width and height
     public Video(String videoPath){
         //         Find name of the provided video file
@@ -54,8 +55,15 @@ public class Video implements SliderControllable {
         videoDisplay.displayCurrentFrame();
     }
 
+    public void readAndDisplayNextFrame(){
+        frameReader.readNextFrame();
+        videoDisplay.displayCurrentFrame();
+    }
 
-
+    public void readAndDisplayFrame(int frameNum){
+        frameReader.readFrame(frameNum);
+        videoDisplay.displayCurrentFrame();
+    }
 //    Constructors for webcam use
     public Video(){
         frameReader = new VideoFrameReader();
@@ -64,7 +72,6 @@ public class Video implements SliderControllable {
         this();
         frameReader.setCaptureResolution(captureWidth, captureHeight);
     }
-
 
     public void convertToImageSequence(String extension, double width, double height) throws IOException {
         if (imagesDir.exists()){
@@ -116,17 +123,20 @@ public class Video implements SliderControllable {
     public Node getDisplay(){
         return videoDisplay;
     }
-
+    public VideoFrameReader getVideoFrameReader(){return frameReader;};
+    public int getLength(){return frameReader.getVideoLength();}
+    private Thread curr = new Thread(()->System.out.println("dasdasd"));
+    private boolean start = false;
     @Override
     public void onSliderUpdate(Number oldValue, Number newValue) {
-        new Thread(()->{
+        Thread test= new Thread(()->{
             long start = System.currentTimeMillis();
             frameReader.readFrame(
                     (int) (frameReader.getVideoLength() * (newValue.doubleValue()/100f))
             );
             videoDisplay.displayCurrentFrame();
             System.out.println(System.currentTimeMillis()-start);
-        }).start();
-
+        });
+        test.start();
     }
 }

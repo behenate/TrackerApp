@@ -57,7 +57,9 @@ public class VideoFrameReader {
         this.videoWidth = (int) this.videoCapture.get(Videoio.CAP_PROP_FRAME_WIDTH);
         this.videoHeight = this.videoCapture.get(Videoio.CAP_PROP_FRAME_HEIGHT);
     }
-
+    public void readNextFrame(){
+        readFrame(currentFrameNum+1, videoSize);
+    }
     public void readFrame(int frameNum){
         readFrame(frameNum, videoSize);
     }
@@ -77,7 +79,6 @@ public class VideoFrameReader {
                 }
                 Mat newMat = new Mat();
                 videoCapture.read(newMat);
-
                 frameMat = newMat;
             }
 
