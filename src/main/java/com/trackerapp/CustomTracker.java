@@ -39,7 +39,6 @@ public class CustomTracker {
 
     public void setTrackerUiFrame(int frameNum){
         Rect pos = boundingBoxes[frameNum];
-        System.out.println(pos);
         Platform.runLater(()->{
             trackerUI.setTranslateX(pos.x);
             trackerUI.setTranslateY(pos.y);

@@ -25,7 +25,7 @@ public class TrackingWindow extends Pane implements SliderControllable{
                 trackerManager.trackAll(frameReader.getFrameMat(), frameReader.getCurrentFrameNum());
             }
         }).start();
-
+        this.getChildren().add(new RectUiFramer());
 
     }
 
