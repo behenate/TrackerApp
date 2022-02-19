@@ -8,11 +8,14 @@ import org.opencv.core.Rect2d;
 import org.opencv.tracking.TrackerCSRT;
 
 public class CustomTracker {
-    private Rect[] boundingBoxes;
+    private int trackerFrameNum=0;
+    private final Rect[] boundingBoxes;
     private TrackerCSRT csrtTracker = TrackerCSRT.create();
-    private Pane trackerUI = new Pane();
-    public CustomTracker(int videoLength){
-        trackerUI.setStyle("-fx-background-color: rgba(54,215,118,0.39)");
+
+    private final RectUiFramer trackerFrame;
+    public CustomTracker(int videoLength, Rect initialRect){
+        this.trackerFrame = new RectUiFramer(initialRect);
+
         boundingBoxes = new Rect[videoLength];
     }
 
@@ -20,37 +23,45 @@ public class CustomTracker {
         boundingBoxes[frameNum] = boundingBox;
     }
 
-    public void initTracker(Mat image, Rect boundingBox, int frameNum){
-        boundingBoxes[frameNum] = boundingBox;
-        csrtTracker.init(image, boundingBox);
+    public void initTracker(Mat image, int frameNum){
+        csrtTracker = TrackerCSRT.create();
+        Rect rectClone = trackerFrame.getRect().clone();
+        boundingBoxes[frameNum] = rectClone;
+        csrtTracker.init(image, rectClone);
+        trackerFrameNum = frameNum;
         setTrackerUiFrame(frameNum);
     }
 
 //    Updates the tracker from the last position to new one based on new frame.
     public boolean updateTracker(Mat image, int frameNum){
+        if (frameNum != trackerFrameNum+1){
+            System.out.println("Reinit");
+            initTracker(image, frameNum);
+        }
         Rect newPos = new Rect();
         boolean res = csrtTracker.update(image, newPos);
         if (res){
             boundingBoxes[frameNum] = newPos;
+            trackerFrameNum = frameNum;
         }
         setTrackerUiFrame(frameNum);
         return res;
     }
 
     public void setTrackerUiFrame(int frameNum){
-        Rect pos = boundingBoxes[frameNum];
         Platform.runLater(()->{
-            trackerUI.setTranslateX(pos.x);
-            trackerUI.setTranslateY(pos.y);
-            trackerUI.setMaxWidth(pos.width);
-            trackerUI.setMaxHeight(pos.height);
-            trackerUI.setMinWidth(pos.width);
-            trackerUI.setMinHeight(pos.height);
+            trackerFrame.setRect(boundingBoxes[frameNum].clone());
         });
 
     }
     public Pane getTrackerUI(){
-        return trackerUI;
+        return trackerFrame;
+    }
+    public Rect getTrackerRect(int frameNum){
+        return boundingBoxes[frameNum];
+    }
+    public Rect getFramerRect(){
+        return trackerFrame.getRect();
     }
 
 

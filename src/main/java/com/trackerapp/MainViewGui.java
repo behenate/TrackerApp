@@ -10,25 +10,27 @@ import javafx.stage.Popup;
 
 import java.io.IOException;
 
-public class MainViewGui extends AnchorPane {
+public class MainViewGui extends AnchorPane{
     private double windowWidth = App.width;
     private double windowHeight = App.height;
     private final App appInstance;
     //        Create and position video
-    private Video video = new Video("/home/wojciech/IdeaProjects/TrackerApp/src/main/resources/videos/dino.mp4",
+    private final Video video = new Video("/home/wojciech/IdeaProjects/TrackerApp/src/main/resources/videos/dino.mp4",
             1280, 720);
-    private TrackingWindow trackingWindow = new TrackingWindow(video);
+
+    private final TrackerManager trackerManager = new TrackerManager(video);
 
     Popup conversionPopup;
     public MainViewGui(App appInstance){
         this.appInstance = appInstance;
 
+
         AnchorPane.setTopAnchor(video.getDisplay(), windowHeight/20);
         AnchorPane.setLeftAnchor(video.getDisplay(), windowWidth/20);
-        this.getChildren().add(trackingWindow);
+        this.getChildren().add(trackerManager.getTrackingWindow());
 
 //        Create and position Slider
-        FrameSlider slider = new FrameSlider(trackingWindow);
+        FrameSlider slider = new FrameSlider(trackerManager);
         slider.setPrefWidth(App.width-App.width/5);
         AnchorPane.setBottomAnchor(slider, windowHeight/20);
         this.getChildren().add(slider);
@@ -65,6 +67,11 @@ public class MainViewGui extends AnchorPane {
             conversionPopup.setX(appInstance.getStage().getX()+convertButton.getLayoutX());
             conversionPopup.setY(appInstance.getStage().getY()+convertButton.getLayoutY()+convertButton.getHeight()+40);
             conversionPopup.show(appInstance.getStage());
+        });
+        Button singleStepForwardButton = new Button(">");
+        this.getChildren().add(singleStepForwardButton);
+        singleStepForwardButton.setOnAction((event)->{
+            trackerManager.trackForwardSingle();
         });
     }
 
@@ -110,4 +117,5 @@ public class MainViewGui extends AnchorPane {
         cancelButton.setOnAction((event -> conversionPopup.hide()));
         return conversionPopup;
     }
+
 }

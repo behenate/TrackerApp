@@ -139,4 +139,7 @@ public class Video implements SliderControllable {
         });
         test.start();
     }
+    public int frameNum(){
+        return frameReader.getCurrentFrameNum();
+    }
 }

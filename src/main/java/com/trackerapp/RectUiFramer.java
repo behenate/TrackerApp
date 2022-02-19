@@ -4,25 +4,25 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
+import org.opencv.core.Rect;
 
 
 public class RectUiFramer extends AnchorPane {
-    private double positionX = 0;
-    private double positionY = 0;
-    private double width = 100;
-    private double height = 100;
-    private Button sizeControlButton = new Button("");
-    private double sizeControlButtonWidth = App.width * 0.007;
+    private Rect rect;
 
-    public RectUiFramer() {
+    public RectUiFramer(Rect initialRect) {
+        double sizeControlButtonWidth = App.width * 0.007;
+        rect = initialRect;
 
-        this.setPrefWidth(width);
-        this.setPrefHeight(height);
+        updateLayout();
+
         this.setStyle("-fx-border-color: #bfff96; -fx-border-width: 2");
 
 //        Setup the size control button in the bottom right of the rectangle
+        Button sizeControlButton = new Button("");
         sizeControlButton.setMinHeight(0);
         sizeControlButton.setMinWidth(0);
+
         sizeControlButton.setPrefWidth(sizeControlButtonWidth);
         sizeControlButton.setPrefHeight(sizeControlButtonWidth);
         sizeControlButton.setAlignment(Pos.BOTTOM_RIGHT);
@@ -30,45 +30,56 @@ public class RectUiFramer extends AnchorPane {
         sizeControlButton.setTranslateY(sizeControlButtonWidth / 2);
         AnchorPane.setBottomAnchor(sizeControlButton, 0d);
         AnchorPane.setRightAnchor(sizeControlButton, 0d);
-        sizeControlButton.setStyle("fx-focus-color: firebrick; -fx-highlight-fill: transparent; -fx-background-color: rgba(196,239,148)");
 
+        sizeControlButton.setStyle("fx-focus-color: firebrick; -fx-highlight-fill: transparent; -fx-background-color: rgba(196,239,148)");
         sizeControlButton.setOnMouseDragged(this::onResizeButtonDrag);
         this.setOnMouseDragged(this::onDrag);
         this.getChildren().add(sizeControlButton);
 
     }
 
+//    On drag of the square resize the window
     public void onResizeButtonDrag(MouseEvent event) {
-        double initWidth = width;
-        double initHeight = height;
-        double posXCenter = positionX + width / 2;
-        double posYCenter = positionY + height / 2;
-        width =  (event.getSceneX()- posXCenter)*2;
-        height = (event.getSceneY()- posYCenter)*2;
-        double widthDelta = width - initWidth;
-        double heightDelta = height - initHeight;
-        positionX = positionX - (widthDelta)/2;
-        positionY = positionY - (heightDelta)/2;
+        Rect initRect = rect.clone();
+        double posXCenter = rect.x + rect.width / 2;
+        double posYCenter = rect.y + rect.height / 2;
+        rect.width = (int) ((event.getSceneX()- posXCenter)*2);
+        rect.height = (int) ((event.getSceneY()- posYCenter)*2);
+        double widthDelta = rect.width - initRect.width;
+        double heightDelta = rect.height - initRect.height;
+        rect.x = (int) (rect.x - (widthDelta)/2);
+        rect.y = (int) (rect.y - (heightDelta)/2);
 
-        if (event.getSceneX() > posXCenter){
-            this.setLayoutX(positionX);
-            this.setPrefWidth(width);
+        if (event.getSceneX() > initRect.x+15){
+            this.setLayoutX(rect.x);
+            this.setPrefWidth(rect.width);
         }
-        if (event.getSceneY() > posYCenter){
-            this.setLayoutY(positionY);
-            this.setPrefHeight(height);
+        if (event.getSceneY() > initRect.y+15){
+            this.setLayoutY(rect.y);
+            this.setPrefHeight(rect.height);
         }
-
-
-//        sizeControlButton.setLayoutX(event.getX());
-//        sizeControlButton.setLayoutY(event.getY());
     }
 
+//    On drag of the entire frame move it.
     public void onDrag(MouseEvent event) {
-        positionX = event.getSceneX() - width / 2;
-        positionY = event.getSceneY() - height / 2;
-        this.setLayoutX(positionX);
-        this.setLayoutY(positionY);
+        rect.x = (int) (event.getSceneX() - rect.width / 2);
+        rect.y = (int) (event.getSceneY() - rect.height / 2);
+        updateLayout();
     }
 
+    public Rect getRect(){
+        return rect;
+    }
+
+    public void setRect(Rect rect){
+        this.rect = rect;
+        updateLayout();
+    }
+
+    private void updateLayout(){
+        this.setLayoutX(rect.x);
+        this.setLayoutY(rect.y);
+        this.setPrefWidth(rect.width);
+        this.setPrefHeight(rect.height);
+    }
 }
