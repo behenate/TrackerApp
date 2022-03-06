@@ -1,6 +1,8 @@
 package com.trackerapp;
 
+import javafx.application.Platform;
 import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import org.opencv.core.Mat;
 import org.opencv.core.Rect;
 
@@ -10,10 +12,12 @@ public class TrackerManager implements SliderControllable{
     private final TrackingWindow trackingWindow;
     private final ArrayList<CustomTracker> trackers = new ArrayList<>();
     private final Video video;
+    private Thread trackingThread;
+
     public TrackerManager(Video video){
         this.video = video;
         this.trackingWindow = new TrackingWindow(video);
-        trackingWindow.setOnMouseClicked((event)->{
+        trackingWindow.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
             if (event.getButton() == MouseButton.SECONDARY){
                 addTracker(new CustomTracker(video.getLength(), new Rect(
                         (int) (event.getX() - Config.defaultTrackerWidth/2),
@@ -22,10 +26,13 @@ public class TrackerManager implements SliderControllable{
                         Config.defaultTrackerHeight)));
             }
         });
+
     }
 
     public void addTracker(CustomTracker tracker){
+        video.getVideoFrameReader().getCurrentFrameNum();
         tracker.initTracker(video.getVideoFrameReader().getFrameMat(), video.getVideoFrameReader().getCurrentFrameNum());
+
         trackers.add(tracker);
         trackingWindow.addTracker(tracker);
     }
@@ -45,21 +52,57 @@ public class TrackerManager implements SliderControllable{
         }
     }
 
-    public void trackForwardSingle(){
+
+    //    Tracks all selected trackers (currently just all trackers)
+    public boolean trackSelectedSingle(int frameJump){
+        boolean tracksSuccessful = true;
         initChanged();
-        video.readAndDisplayNextFrame();
+        int frameNum = video.frameNum();
+        video.readAndDisplayFrame(frameNum + frameJump);
         Mat image = video.getVideoFrameReader().getFrameMat();
         for (CustomTracker tracker: trackers) {
-            tracker.updateTracker(image, video.getVideoFrameReader().getCurrentFrameNum());
+            tracksSuccessful = tracksSuccessful && tracker.updateTracker(image, video.frameNum());
+        }
+        return tracksSuccessful;
+    }
+
+    public boolean trackForwardSingle(){
+        return trackSelectedSingle(1);
+    }
+    public boolean trackBackwardSingle(){
+        return trackSelectedSingle(-1);
+    }
+
+    public void trackTillEnd(int frameJump){
+        if (trackingThread != null && trackingThread.isAlive()){
+            trackingThread.interrupt();
+        }
+        trackingThread = new Thread(() -> {
+            while (video.frameNum()+frameJump < video.getLength() && video.frameNum()+frameJump >= 0){
+                if (!trackSelectedSingle(frameJump) || Thread.currentThread().isInterrupted()){
+                    break;
+                };
+            }
+        }
+        );
+        trackingThread.start();
+    }
+
+    public void trackForwardTillEnd(){
+        trackTillEnd(1);
+
+    }
+
+    public void trackBackwardTillFail(){
+        trackTillEnd(-1);
+    }
+
+    public void stopTracking(){
+        if (trackingThread != null){
+            trackingThread.interrupt();
         }
     }
 
-
-    public void trackAll(Mat image, int frameNum){
-        for (CustomTracker tracker: trackers) {
-            tracker.updateTracker(image, frameNum);
-        }
-    }
 
 
 //    Functions that inits trackers that have been changed by the user
@@ -67,8 +110,8 @@ public class TrackerManager implements SliderControllable{
         for (CustomTracker tracker: trackers) {
             Rect trackerRect = tracker.getTrackerRect(video.frameNum());
             Rect frameRect = tracker.getFramerRect();
-            System.out.println(trackerRect + "  " +  frameRect);
-            if (!trackerRect.equals(frameRect)){
+
+            if (trackerRect == null || !trackerRect.equals(frameRect)){
                 tracker.initTracker(video.getVideoFrameReader().getFrameMat(), video.frameNum());
             }
         }
@@ -86,7 +129,10 @@ public class TrackerManager implements SliderControllable{
 
     @Override
     public void onSliderUpdate(Number oldValue, Number newValue) {
-        this.video.onSliderUpdate(oldValue, newValue);
-        setPositionsToFrame(video.frameNum());
+        new Thread(()->{
+            video.readAndDisplayFrame(newValue.intValue());
+            setPositionsToFrame(newValue.intValue());
+        }).start();
+
     }
 }

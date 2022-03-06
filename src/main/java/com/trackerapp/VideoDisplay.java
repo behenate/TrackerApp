@@ -58,7 +58,7 @@ public class VideoDisplay extends Pane {
 
 
     public void displayCurrentFrame(){
-        Platform.runLater(()->videoView.setImage(frameReader.getFrameImage()));
+        videoView.setImage(frameReader.getFrameImage());
     }
 
 }

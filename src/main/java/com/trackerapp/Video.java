@@ -1,11 +1,10 @@
 package com.trackerapp;
 
-import javafx.event.Event;
+import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
-
-import javafx.scene.image.ImageView;
+import org.apache.commons.io.FileUtils;
 import org.opencv.core.Mat;
 import org.opencv.core.Size;
 import org.opencv.imgcodecs.Imgcodecs;
@@ -14,22 +13,17 @@ import org.opencv.imgproc.Imgproc;
 import java.io.File;
 import java.io.IOException;
 import java.util.Optional;
-import java.util.concurrent.ThreadFactory;
-
-import org.apache.commons.io.FileUtils;
 
 
-public class Video implements SliderControllable {
+public class Video {
     private String videoFilename;
 
     private String imagesDirPath;
     private File imagesDir;
 
-    private final ImageView videoView = new ImageView();
-
     private VideoDisplay videoDisplay;
 
-    private VideoFrameReader frameReader;
+    private final VideoFrameReader frameReader;
     //  Constructor which uses default width and height
     public Video(String videoPath){
         //         Find name of the provided video file
@@ -86,11 +80,11 @@ public class Video implements SliderControllable {
         }else {
             imagesDir.mkdir();
         }
+
         FileUtils.cleanDirectory(imagesDir);
 
         Thread conversionThread = new Thread(() -> {
             int frameNum = 0;
-
             frameReader.readFrame(frameNum);
 
             while (!frameReader.frameMatEmpty()) {
@@ -125,20 +119,7 @@ public class Video implements SliderControllable {
     }
     public VideoFrameReader getVideoFrameReader(){return frameReader;};
     public int getLength(){return frameReader.getVideoLength();}
-    private Thread curr = new Thread(()->System.out.println("dasdasd"));
-    private boolean start = false;
-    @Override
-    public void onSliderUpdate(Number oldValue, Number newValue) {
-        Thread test= new Thread(()->{
-            long start = System.currentTimeMillis();
-            frameReader.readFrame(
-                    (int) (frameReader.getVideoLength() * (newValue.doubleValue()/100f))
-            );
-            videoDisplay.displayCurrentFrame();
-            System.out.println(System.currentTimeMillis()-start);
-        });
-        test.start();
-    }
+
     public int frameNum(){
         return frameReader.getCurrentFrameNum();
     }

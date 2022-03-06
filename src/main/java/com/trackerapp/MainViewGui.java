@@ -2,15 +2,17 @@ package com.trackerapp;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.*;
-import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Popup;
 
 import java.io.IOException;
 
-public class MainViewGui extends AnchorPane{
+public class MainViewGui extends VBox{
     private double windowWidth = App.width;
     private double windowHeight = App.height;
     private final App appInstance;
@@ -22,21 +24,25 @@ public class MainViewGui extends AnchorPane{
 
     Popup conversionPopup;
     public MainViewGui(App appInstance){
+//        ESSENTIAL BOXES
+        VBox miscBox = new VBox();
+        HBox controlsBox = new HBox();
+        VBox sliderBox = new VBox();
+        HBox conversionBox = new HBox();
+
+
         this.appInstance = appInstance;
 
 
-        AnchorPane.setTopAnchor(video.getDisplay(), windowHeight/20);
-        AnchorPane.setLeftAnchor(video.getDisplay(), windowWidth/20);
-        this.getChildren().add(trackerManager.getTrackingWindow());
+
+//        SLIDER
 
 //        Create and position Slider
         FrameSlider slider = new FrameSlider(trackerManager);
         slider.setPrefWidth(App.width-App.width/5);
-        AnchorPane.setBottomAnchor(slider, windowHeight/20);
-        this.getChildren().add(slider);
+        sliderBox.getChildren().add(slider);
 
-//        Container for conversion buttons
-        HBox conversionBox = new HBox();
+//        CONVERSION
 
 //        Button for conversion
         Button convertButton = new Button("Convert To Image Sequence");
@@ -56,9 +62,6 @@ public class MainViewGui extends AnchorPane{
         conversionBox.getChildren().add(clearButton);
         if (video.hasBeenConverted())
             clearButton.setVisible(true);
-        AnchorPane.setRightAnchor(conversionBox, windowWidth/34);
-        AnchorPane.setTopAnchor(conversionBox, windowHeight/20);
-        this.getChildren().add(conversionBox);
 
 
         convertButton.setOnAction((e)->{
@@ -68,11 +71,60 @@ public class MainViewGui extends AnchorPane{
             conversionPopup.setY(appInstance.getStage().getY()+convertButton.getLayoutY()+convertButton.getHeight()+40);
             conversionPopup.show(appInstance.getStage());
         });
-        Button singleStepForwardButton = new Button(">");
-        this.getChildren().add(singleStepForwardButton);
-        singleStepForwardButton.setOnAction((event)->{
+
+//        TRACKING CONTROLS
+        controlsBox.setPadding(new Insets(App.height*0.02,50,App.height*0.02,50));
+        controlsBox.setSpacing(App.width/100);
+
+        Button trackBackwardTillFailButton = new Button("<=");
+        trackBackwardTillFailButton.setOnAction(event->{
+            trackerManager.trackBackwardTillFail();
+        });
+
+        Button singleTrackBackwardButton = new Button("<");
+        singleTrackBackwardButton.setOnAction(event -> {
+            trackerManager.trackBackwardSingle();
+        });
+
+        Button stopTrackingButton = new Button("⬜" );
+        stopTrackingButton.setOnAction(event -> {
+            trackerManager.stopTracking();
+        });
+
+        Button singleTrackForwardButton = new Button(">");
+        singleTrackForwardButton.setOnAction((event)->{
             trackerManager.trackForwardSingle();
         });
+
+        Button trackForwardTillFailButton = new Button("=>");
+        trackForwardTillFailButton.setOnAction(event->{
+            trackerManager.trackForwardTillEnd();
+        });
+
+        controlsBox.getChildren().addAll(
+                trackBackwardTillFailButton, singleTrackBackwardButton, stopTrackingButton,
+                singleTrackForwardButton, trackForwardTillFailButton
+        );
+//        Set the width of the control buttons
+        for (Node elem:controlsBox.getChildren()) {
+            if (elem instanceof Button){
+                ((Button) elem).setPrefWidth(50);
+            }
+        }
+
+//        FINAL LAYOUT
+//        Pack the elements
+        controlsBox.setAlignment(Pos.CENTER);
+
+        sliderBox.setAlignment(Pos.BOTTOM_CENTER);
+        miscBox.setAlignment(Pos.TOP_CENTER);
+        miscBox.getChildren().add(conversionBox);
+
+        SliderWindow sliderWindow = new SliderWindow(trackerManager,0, video.getLength());
+        sliderWindow.setPrefHeight(App.height*0.13);
+        sliderWindow.setMaxWidth(App.width*0.8);
+
+        this.getChildren().addAll(new HBox(trackerManager.getTrackingWindow(), miscBox) , controlsBox, slider, sliderWindow);
     }
 
 

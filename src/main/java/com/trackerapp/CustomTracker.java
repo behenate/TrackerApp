@@ -7,63 +7,65 @@ import org.opencv.core.Rect;
 import org.opencv.core.Rect2d;
 import org.opencv.tracking.TrackerCSRT;
 
+import java.util.concurrent.Semaphore;
+
 public class CustomTracker {
-    private int trackerFrameNum=0;
     private final Rect[] boundingBoxes;
     private TrackerCSRT csrtTracker = TrackerCSRT.create();
 
     private final RectUiFramer trackerFrame;
-    public CustomTracker(int videoLength, Rect initialRect){
-        this.trackerFrame = new RectUiFramer(initialRect);
 
-        boundingBoxes = new Rect[videoLength];
+    //    boolean that changes to false when the video has been scrolled.
+    private boolean onLastTrackedFrame = true;
+
+    public CustomTracker(int videoLength, Rect initialRect) {
+        this.trackerFrame = new RectUiFramer(initialRect.clone());
+        boundingBoxes = new Rect[videoLength+1];
     }
 
-    public void setBoundingBox(Mat image, Rect boundingBox, int frameNum){
+    public void setBoundingBox(Mat image, Rect boundingBox, int frameNum) {
         boundingBoxes[frameNum] = boundingBox;
     }
 
-    public void initTracker(Mat image, int frameNum){
+//    Initializes the tracker at the provided frame number
+    public void initTracker(Mat image, int frameNum) {
         csrtTracker = TrackerCSRT.create();
-        Rect rectClone = trackerFrame.getRect().clone();
-        boundingBoxes[frameNum] = rectClone;
-        csrtTracker.init(image, rectClone);
-        trackerFrameNum = frameNum;
+        boundingBoxes[frameNum] = trackerFrame.getRect().clone();
+        csrtTracker.init(image, trackerFrame.getRect().clone());
         setTrackerUiFrame(frameNum);
     }
 
-//    Updates the tracker from the last position to new one based on new frame.
-    public boolean updateTracker(Mat image, int frameNum){
-        if (frameNum != trackerFrameNum+1){
-            System.out.println("Reinit");
+    //    Updates the tracker from the last position to new one based on new frame.
+    public boolean updateTracker(Mat image, int frameNum) {
+        if (!onLastTrackedFrame) {
             initTracker(image, frameNum);
         }
         Rect newPos = new Rect();
         boolean res = csrtTracker.update(image, newPos);
-        if (res){
+        if (res) {
             boundingBoxes[frameNum] = newPos;
-            trackerFrameNum = frameNum;
+            setTrackerUiFrame(frameNum);
+            onLastTrackedFrame = true;
         }
-        setTrackerUiFrame(frameNum);
         return res;
     }
 
-    public void setTrackerUiFrame(int frameNum){
-        Platform.runLater(()->{
+    public void setTrackerUiFrame(int frameNum) {
+        // Only updateTracker resets that to true, any change from outside will leave it at false which will reinitialize the tracker
+        onLastTrackedFrame = false;
+        if (boundingBoxes[frameNum] != null)
             trackerFrame.setRect(boundingBoxes[frameNum].clone());
-        });
-
     }
-    public Pane getTrackerUI(){
+
+    public Pane getTrackerUI() {
         return trackerFrame;
     }
-    public Rect getTrackerRect(int frameNum){
+
+    public Rect getTrackerRect(int frameNum) {
         return boundingBoxes[frameNum];
     }
-    public Rect getFramerRect(){
+
+    public Rect getFramerRect() {
         return trackerFrame.getRect();
     }
-
-
-
 }
